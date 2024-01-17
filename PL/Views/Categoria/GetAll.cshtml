@@ -1,0 +1,190 @@
+﻿
+@{
+    ViewBag.Title = "GetAll";
+    Layout = "~/Views/Shared/_Layout.cshtml";
+}
+
+<h2 class="text-center">Categoria</h2>
+
+<div class="text-center">
+    <button class="btn btn-success m-3" onclick="showModal()">Agregar</button>
+</div>
+<div class="col-md-12">
+
+    <table id="tablaEmpleado" class="table table-hover" border="1">
+        <thead class="table-dark">
+            <tr>
+                <th class="text-center" scope="col"></th>
+                <th class="text-center" scope="col">Categoria</th>
+                <th class="text-center" scope="col"></th>
+            </tr>
+        </thead>
+        <tbody></tbody>
+    </table>
+</div>
+
+
+<div class="modal fade" id="modal" tabindex="-1" role="dialog" aria-labelledby="myModalLabel" aria-hidden="true">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <div class="modal-header">
+                <button type="button" class="close" data-dismiss="modal" onclick="modalClose()">×</button>
+                <h4 class="modal-title">Formulario Categoria</h4>
+            </div>
+
+            <div class="modal-body">
+                <form>
+                    <div class="form-group d-flex justify-content-center m-2">
+                        <input class="form-control" id="txtidCategoria" placeholder="IdCategoria" type="hidden" />
+                    </div>
+                    <div class="form-group d-flex justify-content-center m-2">
+                        <input type="text" class="form-control" id="txtNombre" placeholder="Nombre de la categoria" />
+                    </div>
+                </form>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-success m-1" id="btnUpdate" onclick="guardar()">Guardar</button>
+                <button type="button" class="btn btn-danger m-1" data-dismiss="modal" onclick="modalClose()">Cancelar</button>
+            </div>
+        </div>
+    </div>
+</div>
+@Scripts.Render("~/bundles/jquery")
+
+<script type="text/javascript">
+    $(document).ready(function () { //click
+        GetAll();
+
+    });
+    function showModal() {
+        $('#modal').modal("show");
+    }
+
+    function modalClose() {
+        $('#modal').modal("hide");
+    }
+
+    function guardar() {
+        var IdCategoria = $('#txtidCategoria').val()
+        if (IdCategoria == 0) {
+            Add();
+        } else {
+            Update();
+        }
+    }
+
+    function limpiarModal() {
+        $('#txtidCategoria').val('');
+        $('#txtNombre').val('');
+    }
+
+
+    function GetAll() {
+        $.ajax({
+
+            url: 'http://localhost:21682/api/Categoria',
+            type: 'GET',
+            success: function (result) {
+                console.log(result)
+                $('#tablaEmpleado tbody').empty();
+                $.each(result, function (i, categoria) {
+
+                    var filas =
+                        '<tr>'
+                        + '<td class="text-center"> '
+                        + '<button class="btn btn-outline-warning" onclick="GetById(' + categoria.IdCategoria + ')">'
+                        + '<i class="fa-solid fa-pen-to-square fa-xl"></i>'
+                        + '</button> '
+                        + '</td>'
+                        + "<td class='text-center'>" + categoria.Nombre + "</td>"
+                        + '<td class="text-center"> <button class="btn btn-danger" onclick="Eliminar(' + categoria.IdCategoria + ')"><i class="fa-solid fa-ban fa-xl" style="color: #ffffff;"></i></button></td>'
+                        + "</tr>";
+
+                    $("#tablaEmpleado tbody").append(filas);
+                });
+            },
+            error: function (result) {
+                alert('Error en la consulta.' + result.responseJSON.ErrorMessage); //es un error de JSON, y es porque puede venir vacio o null
+            }
+        });
+    };
+
+
+    function Eliminar(idCategoria) {
+        if (confirm("Estas seguro de eliminar el equipo ")) {
+            $.ajax({
+                type: 'DELETE',
+                url: 'http://localhost:21682/api/Categoria/' + idCategoria,
+                success: function (result) {
+                    $('#myModal').modal();
+                    GetAll();
+                },
+                error: function (result) {
+                    alert('Error en la consulta.' + result.responseJSON.ErrorMessage);
+                }
+            });
+        };
+    };
+    function GetById(idCategoria) {
+        $.ajax({
+            type: 'GET',
+            url: 'http://localhost:21682/api/Categoria/' + idCategoria,
+            success: function (result) {
+                limpiarModal();
+                $('#txtidCategoria').val(result[0].IdCategoria);
+                $('#txtNombre').val(result[0].Nombre);
+                $('#modal').modal('show');
+            },
+            error: function (result) {
+                alert('Error en la consulta.' + result.responseJSON.ErrorMessage);
+            }
+        });
+    }
+
+    function Update() {
+        var categoria = {
+            IdCategoria: $('#txtidCategoria').val(),
+            Nombre: $('#txtNombre').val()
+        }
+        $.ajax({
+            type: 'PUT',
+            url: 'http://localhost:21682/api/Categoria/' + categoria.IdCategoria,
+            contentType: 'application/json', // Aquí se establece el Content-Type
+            data: JSON.stringify(categoria),
+            success: function (result) {
+                alert("Categoria se ha actualizado correctamente");
+                modalClose();
+                limpiarModal();
+                GetAll();
+            },
+            error: function (result) {
+                alert('Error en la consulta.' + result.responseJSON.ErrorMessage);
+            }
+        });
+    }
+
+    function Add() {
+        var categoria = {
+            Nombre: $('#txtNombre').val()
+        }
+        $.ajax({
+            url: 'http://localhost:21682/api/Categoria',
+            type: 'POST',
+            contentType: 'application/json', // Aquí se establece el Content-Type
+            data: JSON.stringify(categoria), // Asegúrate de convertir tu objeto a una cadena JSON
+            success: function (result) {
+                alert("Categoria dado de alta correctamente");
+                modalClose();
+                limpiarModal();
+                GetAll();
+            },
+            error: function (result) {
+                console.log(result);
+                alert('Error en la consulta.' + result.responseJSON.ErrorMessage); //es un error de JSON, y es porque puede venir vacio o null
+            }
+        });
+    }
+
+</script>
+
+

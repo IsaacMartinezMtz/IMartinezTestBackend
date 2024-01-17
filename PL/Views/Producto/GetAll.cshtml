@@ -1,0 +1,299 @@
+﻿
+@{
+    ViewBag.Title = "GetAll";
+    Layout = "~/Views/Shared/_Layout.cshtml";
+}
+
+<h2 class="text-center">Producto</h2>
+
+<div class="text-center">
+    <button class="btn btn-success m-3" onclick="showModal()">Agregar</button>
+</div>
+<div class="col-md-12">
+
+    <table id="tablaEmpleado" class="table table-hover" border="1">
+        <thead class="table-dark">
+            <tr>
+                <th class="text-center" scope="col"></th>
+                <th class="text-center" scope="col">Nombre</th>
+                <th class="text-center" scope="col">Num. Material</th>
+                <th class="text-center" scope="col">Inventario</th>
+                <th class="text-center" scope="col">Categoria</th>
+                <th class="text-center" scope="col"></th>
+            </tr>
+        </thead>
+        <tbody></tbody>
+    </table>
+</div>
+
+
+<div class="modal fade" id="modal" tabindex="-1" role="dialog" aria-labelledby="myModalLabel" aria-hidden="true">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <div class="modal-header">
+                <button type="button" class="close" data-dismiss="modal" onclick="modalClose()">×</button>
+                <h4 class="modal-title">Formulario Liga</h4>
+            </div>
+
+            <div class="modal-body">
+                <form>
+                    <div class="form-group d-flex justify-content-center m-2">
+                        <input class="form-control" id="txtidProducto" placeholder="IdProducto" type="hidden" />
+                    </div>
+                    <div class="form-group d-flex justify-content-center m-2">
+                        <input type="text" class="form-control" id="txtNombreProducto" placeholder="Nombre del producto" />
+                    </div>
+                    <div class="form-group d-flex justify-content-center m-2">
+                        <input type="text" class="form-control" id="txtNumMaterial" placeholder="Numero del Material" />
+                    </div>
+                    <div class="form-group d-flex justify-content-center m-2">
+                        <input type="text" class="form-control" id="txtInventario" placeholder="Inventario" />
+                    </div>
+                    <div class="form-group d-flex justify-content-center m-2">
+                        <select class="form-control" id="ddlCategorias">
+                            <option value="0">Selecciona una Categoria</option>
+                        </select>
+                    </div>
+                    <div class="form-group d-flex justify-content-center m-2">
+                        <select class="form-control" id="ddlSubCategorias">
+                            <option value="0">Selecciona una SubCategoria</option>
+                        </select>
+                    </div>
+                    <div class="form-group d-flex justify-content-center m-2">
+                        <select class="form-control" id="ddlDivSubcategoria">
+                            <option value="0">Selecciona Sub Categoria</option>
+                        </select>
+                    </div>
+                </form>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-success m-1" id="btnUpdate" onclick="guardar()">Guardar</button>
+                <button type="button" class="btn btn-danger m-1" data-dismiss="modal" onclick="modalClose()">Cancelar</button>
+            </div>
+        </div>
+    </div>
+</div>
+@Scripts.Render("~/bundles/jquery")
+
+<script type="text/javascript">
+    $(document).ready(function () { //click
+        GetAll();
+        GetAllCategoria()
+
+    });
+    function showModal() {
+        $('#modal').modal("show");
+    }
+
+    function modalClose() {
+        $('#modal').modal("hide");
+    }
+
+    function guardar() {
+        var IdProducto = $('#txtidProducto').val()
+        if (IdProducto == 0) {
+            Add();
+        } else {
+            Update();
+        }
+    }
+
+    function limpiarModal() {
+        $('#txtidProducto').val('');
+        $('#txtNombreProducto').val('');
+        $('#txtNumMaterial').val('');
+        $('#txtInventario').val('');
+        $('#ddlCategorias option[value="0"]').attr("selected", true);
+        $('#ddlSubCategorias option[value="0"]').attr("selected", true);
+        $('#ddlddlDivSubcategoria option[value="0"]').attr("selected", true);
+    }
+
+
+    function GetAll() {
+        $.ajax({
+
+            url: 'http://localhost:21682/api/Productos',
+            type: 'GET',
+            success: function (result) {
+                console.log(result)
+                $('#tablaEmpleado tbody').empty();
+                $.each(result, function (i, producto) {
+
+                    var filas =
+                        '<tr>'
+                        + '<td class="text-center"> '
+                        + '<button class="btn btn-outline-warning" onclick="GetById(' + producto.IdProductos + ')">'
+                        + '<i class="fa-solid fa-pen-to-square fa-xl"></i>'
+                        + '</button> '
+                        + '</td>'
+                        + "<td class='text-center'>" + producto.NombreProducto + "</td>"
+                        + "<td class='text-center'>" + producto.NumMaterial + "</td>"
+                        + "<td class='text-center'>" + producto.Inventario + "</td>"
+                        + "<td class='text-center'>" + producto.DivSubcategorias.Nombre + "</td>"
+                        + '<td class="text-center"> <button class="btn btn-danger" onclick="Eliminar(' + producto.IdProductos + ')"><i class="fa-solid fa-ban fa-xl" style="color: #ffffff;"></i></button></td>'
+                        + "</tr>";
+
+                    $("#tablaEmpleado tbody").append(filas);
+                });
+            },
+            error: function (result) {
+                alert('Error en la consulta.' + result.responseJSON.ErrorMessage); //es un error de JSON, y es porque puede venir vacio o null
+            }
+        });
+    };
+
+
+    function GetAllCategoria() {
+        $.ajax({
+            url: 'http://localhost:21682/api/Categoria',
+            type: 'GET',
+            success: function (result) {
+                console.log(result)
+                $.each(result, function (i, categoria) {
+                    var filas =
+                        '<option value="' + categoria.IdCategoria + '">' + categoria.Nombre + '</option>';
+                    $("#ddlCategorias").append(filas);
+                });
+            },
+            error: function (result) {
+                alert('Error .' + result.responseJSON.ErrorMessage);
+            }
+        });
+    }
+    $("#ddlCategorias").change(function () {
+        var categoria = {
+            idCategoria: $("#ddlCategorias").val()
+        }
+        $("#ddlSubCategorias").empty();
+        $.ajax({
+            url: 'http://localhost:21682/api/SubCategorias/categorias/'+ categoria.idCategoria,
+            type: "GET",
+            dataType: "json",
+            success: function (result) {
+                $("#ddlSubCategorias").append('<option value="0">' + 'Seleccione una opción' + '</option>');
+                $.each(result, function (i, result) {
+                    $("#ddlSubCategorias").append('<option value="'
+                        + result.IdSubcategorias + '">'
+                        + result.Nomnbre + '</option>');
+                });
+            },
+            error: function (error) {
+                alert('Ocurrio un error en la consulta');
+            }
+        });
+    });
+    $("#ddlSubCategorias").change(function () {
+        var subCategorias = {
+            idSubCategoria: $("#ddlSubCategorias").val()
+        }
+        $("#ddlDivSubcategoria").empty();
+        $.ajax({
+            url: 'http://localhost:21682/api/divSubcategorias/subCategorias/' + subCategorias.idSubCategoria,
+            type: "GET",
+            dataType: "json",
+            success: function (result) {
+                $("#ddlDivSubcategoria").append('<option value="0">' + 'Seleccione una opción' + '</option>');
+                $.each(result, function (i, result) {
+                    $("#ddlDivSubcategoria").append('<option value="'
+                        + result.IdDivSubcategorias + '">'
+                        + result.Nombre + '</option>');
+                });
+            },
+            error: function (error) {
+                alert('Ocurrio un error en la consulta');
+            }
+        });
+    });
+
+    function Eliminar(idProducto) {
+        if (confirm("Estas seguro de eliminar el equipo ")) {
+            $.ajax({
+                type: 'DELETE',
+                url: 'http://localhost:21682/api/Productos/' + idProducto,
+                success: function (result) {
+                    $('#myModal').modal();
+                    GetAll();
+                },
+                error: function (result) {
+                    alert('Error en la consulta.' + result.responseJSON.ErrorMessage);
+                }
+            });
+        };
+    };
+    function GetById(idProducto) {
+        $.ajax({
+            type: 'GET',
+            url: 'http://localhost:21682/api/Productos/' + idProducto,
+            success: function (result) {
+                limpiarModal();
+                $('#txtidProducto').val(result[0].IdProductos);
+                $('#txtNombreProducto').val(result[0].NombreProducto);
+                $('#txtNumMaterial').val(result[0].NumMaterial);
+                $('#txtInventario').val(result[0].Inventario);
+                $("#ddlCategorias option[value='" + result[0].DivSubcategorias.SubCategoria.Categorias.IdCategoria + "']").attr("selected", true);
+                $("#ddlSubCategorias option[value='" + result[0].DivSubcategorias.SubCategoria.IdSubcategorias + "']").attr("selected", true);
+                $("#ddlDivSubcategoria option[value='" + result[0].DivSubcategorias.IdDivSubcategorias + "']").attr("selected", true);
+                $('#modal').modal('show');
+            },
+            error: function (result) {
+                alert('Error en la consulta.' + result.responseJSON.ErrorMessage);
+            }
+        });
+    }
+
+    function Update() {
+        var producto = {
+            IdProductos: $('#txtidProducto').val(),
+            NombreProducto: $('#txtNombreProducto').val(),
+            NumMaterial: $('#txtNumMaterial').val(),
+            Inventario: $('#txtInventario').val(),
+            DivSubcategorias: {
+                IdDivSubcategorias: $('#ddlDivSubcategoria').val()
+            }
+        }
+        $.ajax({
+            type: 'PUT',
+            url: 'http://localhost:21682/api/Productos/' + producto.IdProductos,
+            contentType: 'application/json', // Aquí se establece el Content-Type
+            data: JSON.stringify(producto),
+            success: function (result) {
+                alert("Producto se ha actualizado correctamente");
+                modalClose();
+                limpiarModal();
+                GetAll();
+            },
+            error: function (result) {
+                alert('Error en la consulta.' + result.responseJSON.ErrorMessage);
+            }
+        });
+    }
+
+    function Add() {
+        var producto = {
+            NombreProducto: $('#txtNombreProducto').val(),
+            NumMaterial: $('#txtNumMaterial').val(),
+            Inventario: $('#txtInventario').val(),
+            DivSubcategorias: {
+                IdDivSubcategorias: $('#ddlDivSubcategoria').val()
+            }
+        }
+        $.ajax({
+            url: 'http://localhost:21682/api/Productos',
+            type: 'POST',
+            contentType: 'application/json', // Aquí se establece el Content-Type
+            data: JSON.stringify(producto), // Asegúrate de convertir tu objeto a una cadena JSON
+            success: function (result) {
+                alert("Producto dado de alta correctamente");
+                modalClose();
+                limpiarModal();
+                GetAll();
+            },
+            error: function (result) {
+                console.log(result);
+                alert('Error en la consulta.' + result.responseJSON.ErrorMessage); //es un error de JSON, y es porque puede venir vacio o null
+            }
+        });
+    }
+
+</script>
+

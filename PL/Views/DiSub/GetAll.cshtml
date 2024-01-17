@@ -1,0 +1,222 @@
+﻿
+@{
+    ViewBag.Title = "GetAll";
+    Layout = "~/Views/Shared/_Layout.cshtml";
+}
+
+<h2 class="text-center">Division de Sub Categoria</h2>
+
+<div class="text-center">
+    <button class="btn btn-success m-3" onclick="showModal()">Agregar</button>
+</div><div class="col-md-12">
+
+    <table id="tablaEmpleado" class="table table-hover" border="1">
+        <thead class="table-dark">
+            <tr>
+                <th class="text-center" scope="col"></th>
+                <th class="text-center" scope="col">Divison de subcategoria </th>
+                <th class="text-center" scope="col">SubCategoria</th>
+                <th class="text-center" scope="col"></th>
+            </tr>
+        </thead>
+        <tbody></tbody>
+    </table>
+</div>
+
+
+<div class="modal fade" id="modal" tabindex="-1" role="dialog" aria-labelledby="myModalLabel" aria-hidden="true">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <div class="modal-header">
+                <button type="button" class="close" data-dismiss="modal" onclick="modalClose()">×</button>
+                <h4 class="modal-title">Formulario SubCategoria</h4>
+            </div>
+
+            <div class="modal-body">
+                <form>
+                    <div class="form-group d-flex justify-content-center m-2">
+                        <input class="form-control" id="txtidDivsub" placeholder="IdDivsub" type="hidden" />
+                    </div>
+                    <div class="form-group d-flex justify-content-center m-2">
+                        <input type="text" class="form-control" id="txtNombre" placeholder="Nombre de la SubCategoria" />
+                    </div>
+                    <div class="form-group d-flex justify-content-center m-2">
+                        <select class="form-control" id="ddlCategorias">
+                            <option value="0">Selecciona una SubCategoria</option>
+                        </select>
+                    </div>
+                </form>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-success m-1" id="btnUpdate" onclick="guardar()">Guardar</button>
+                <button type="button" class="btn btn-danger m-1" data-dismiss="modal" onclick="modalClose()">Cancelar</button>
+            </div>
+        </div>
+    </div>
+</div>
+@Scripts.Render("~/bundles/jquery")
+
+<script type="text/javascript">
+    $(document).ready(function () { //click
+        GetAll();
+        GetAllCategoria();
+
+    });
+    function showModal() {
+        $('#modal').modal("show");
+    }
+
+    function modalClose() {
+        $('#modal').modal("hide");
+    }
+
+    function guardar() {
+        var IdDivSub = $('#txtidDivsub').val()
+        if (IdDivSub == 0) {
+            Add();
+        } else {
+            Update();
+        }
+    }
+
+    function limpiarModal() {
+        $('#txtidDivsub').val('');
+        $('#txtNombre').val('');
+        $('#ddlCategorias option[value="0"]').attr("selected", true);
+    }
+
+
+    function GetAll() {
+        $.ajax({
+
+            url: 'http://localhost:21682/api/divSubcategorias',
+            type: 'GET',
+            success: function (result) {
+                console.log(result)
+                $('#tablaEmpleado tbody').empty();
+                $.each(result, function (i, subCategoria) {
+
+                    var filas =
+                        '<tr>'
+                        + '<td class="text-center"> '
+                        + '<button class="btn btn-outline-warning" onclick="GetById(' + subCategoria.IdDivSubcategorias + ')">'
+                        + '<i class="fa-solid fa-pen-to-square fa-xl"></i>'
+                        + '</button> '
+                        + '</td>'
+                        + "<td class='text-center'>" + subCategoria.Nombre + "</td>"
+                        + "<td class='text-center'>" + subCategoria.SubCategoria.Nomnbre + "</td>"
+                        + '<td class="text-center"> <button class="btn btn-danger" onclick="Eliminar(' + subCategoria.IdDivSubcategorias + ')"><i class="fa-solid fa-ban fa-xl" style="color: #ffffff;"></i></button></td>'
+                        + "</tr>";
+
+                    $("#tablaEmpleado tbody").append(filas);
+                });
+            },
+            error: function (result) {
+                alert('Error en la consulta.' + result.responseJSON.ErrorMessage); //es un error de JSON, y es porque puede venir vacio o null
+            }
+        });
+    };
+    function GetAllCategoria() {
+        $.ajax({
+            url: 'http://localhost:21682/api/SubCategorias/',
+            type: 'GET',
+            success: function (result) {
+                console.log(result)
+                $.each(result, function (i, categoria) {
+                    var filas =
+                        '<option value="' + categoria.IdSubcategorias + '">' + categoria.Nomnbre + '</option>';
+                    $("#ddlCategorias").append(filas);
+                });
+            },
+            error: function (result) {
+                alert('Error .' + result.responseJSON.ErrorMessage);
+            }
+        });
+    }
+
+    function Eliminar(idDivSub) {
+        if (confirm("Estas seguro de eliminar el equipo ")) {
+            $.ajax({
+                type: 'DELETE',
+                url: 'http://localhost:21682/api/divSubcategorias/' + idDivSub,
+                success: function (result) {
+                    $('#myModal').modal();
+                    GetAll();
+                },
+                error: function (result) {
+                    alert('Error en la consulta.' + result.responseJSON.ErrorMessage);
+                }
+            });
+        };
+    };
+    function GetById(idDivSub) {
+        $.ajax({
+            type: 'GET',
+            url: 'http://localhost:21682/api/divSubcategorias/' + idDivSub,
+            success: function (result) {
+                limpiarModal();
+                $('#txtidDivsub').val(result[0].IdDivSubcategorias);
+                $('#txtNombre').val(result[0].Nombre);
+                $("#ddlCategorias option[value='" + result[0].SubCategoria.IdSubcategorias + "']").attr("selected", true);
+                $('#modal').modal('show');
+            },
+            error: function (result) {
+                alert('Error en la consulta.' + result.responseJSON.ErrorMessage);
+            }
+        });
+    }
+
+    function Update() {
+        var DivSubCategoria = {
+            IdDivSubcategorias: $('#txtidDivsub').val(),
+            Nombre: $('#txtNombre').val(),
+            SubCategoria: {
+                IdSubcategorias: $('#ddlCategorias').val(),
+            }
+        }
+        $.ajax({
+            type: 'PUT',
+            url: 'http://localhost:21682/api/divSubcategorias/' + DivSubCategoria.IdDivSubcategorias,
+            contentType: 'application/json', // Aquí se establece el Content-Type
+            data: JSON.stringify(DivSubCategoria),
+            success: function (result) {
+                alert("Divison de subcategoria se ha actualizado correctamente");
+                modalClose();
+                limpiarModal();
+                GetAll();
+            },
+            error: function (result) {
+                alert('Error en la consulta.' + result.responseJSON.ErrorMessage);
+            }
+        });
+    }
+
+    function Add() {
+        var DivSubCategoria = {
+            IdDivSubcategorias: $('#txtidDivsub').val(),
+            Nombre: $('#txtNombre').val(),
+            SubCategoria: {
+                IdSubcategorias: $('#ddlCategorias').val(),
+            }
+        }
+        $.ajax({
+            url: 'http://localhost:21682/api/divSubcategorias',
+            type: 'POST',
+            contentType: 'application/json', // Aquí se establece el Content-Type
+            data: JSON.stringify(DivSubCategoria), // Asegúrate de convertir tu objeto a una cadena JSON
+            success: function (result) {
+                alert("Sub categoria dado de alta correctamente");
+                modalClose();
+                limpiarModal();
+                GetAll();
+            },
+            error: function (result) {
+                console.log(result);
+                alert('Error en la consulta.' + result.responseJSON.ErrorMessage); //es un error de JSON, y es porque puede venir vacio o null
+            }
+        });
+    }
+
+</script>
+
+
